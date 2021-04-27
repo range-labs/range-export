@@ -1,0 +1,38 @@
+{
+  "name": "range-export",
+  "description": "Range Export",
+  "version": "1.0.0",
+  "scripts": {
+    "lint": "eslint **/*.js",
+    "fmt": "prettier --write **/*.js"
+  },
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "cli-progress": "^3.9.0",
+    "json-2-csv": "^3.10.3",
+    "meow": "^9.0.0",
+    "range-sdk": "^1.4.0"
+  },
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-prettier": "^4.3.0",
+    "prettier": "^1.17.1"
+  },
+  "prettier": {
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "printWidth": 100,
+    "semi": true,
+    "singleQuote": true,
+    "quoteProps": "consistent"
+  },
+  "main": "cmd.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "bin": {
+    "range-export": "./cmd.js"
+  },
+  "license": "Apache 2",
+  "type": "module"
+}
