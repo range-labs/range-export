@@ -12,7 +12,7 @@ code.
 ## Installation
 
 ```bash
-$ npm install -g range-export
+$ npm install -g range-export-cli
 ```
 
 ## Usage
@@ -23,7 +23,7 @@ This package needs to be configured with an API key which you can generate by vi
 
 ```bash
 $ export RANGE_ACCESS_KEY='deadbeef1234567890'
-$ range-export --help
+$ range-export-cli --help
 ```
 
 ### Options
@@ -40,7 +40,7 @@ $ range-export --help
 Export all check-ins for the workspace between two dates.
 
 ```bash
-$ range-export check-ins  -a 2020-01-01 -b 2020-02-01 -o tmp.json
+$ range-export-cli check-ins  -a 2020-01-01 -b 2020-02-01 -o tmp.json
 ```
 
 The JSON export will contain snippet items embedded in the update object.
