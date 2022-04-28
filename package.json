@@ -1,7 +1,7 @@
 {
-  "name": "range-export",
+  "name": "range-export-cli",
   "description": "Range Export",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "scripts": {
     "lint": "eslint **/*.js",
     "fmt": "prettier --write **/*.js"
@@ -31,7 +31,7 @@
     "lib": "lib"
   },
   "bin": {
-    "range-export": "./cmd.js"
+    "range-export-cli": "./cmd.js"
   },
   "license": "Apache 2",
   "type": "module"
