@@ -11,7 +11,7 @@ const { json2csvAsync } = pkg;
 import { createRequire } from 'module';
 const meow = createRequire(import.meta.url)('meow');
 
-import { log, fatal, error } from './lib/printer.js';
+import { error, fatal, info, log, progress } from './lib/printer.js';
 import exportCheckins from './lib/export-checkins.js';
 import renderCheckinsToHtml from './lib/render-checkins-to-html.js';
 
@@ -104,6 +104,10 @@ try {
 
 // Set up image export directory for formats with image export.
 let saveImage = undefined;
+let saveImagesPromise = Promise.resolve();
+let imgBar = undefined,
+  imgTotal = 0,
+  imgProgress = 0;
 if (cli.flags.fmt === 'html') {
   const imgDirname = 'range-export';
   const imgPath = resolve(join(dirname(cli.flags.out), imgDirname));
@@ -113,20 +117,38 @@ if (cli.flags.fmt === 'html') {
   saveImage = (name, url) => {
     const baseName = basename(name);
     const imgFile = createWriteStream(join(imgPath, baseName));
-    https.get(url, function(resp) {
-      const { statusCode } = resp;
-      if (statusCode !== 200) {
-        error(`Failed to download image: (${statusCode}) ${url}`);
-        resp.resume();
-        return;
-      }
-      resp.pipe(imgFile);
-      imgFile.on("finish", () => {
-        imgFile.close();
-      })
-    });
+    imgTotal++;
+    if (imgBar) imgBar.setTotal(imgTotal);
+    saveImagesPromise = saveImagesPromise.then(
+      () =>
+        new Promise((resolve, reject) =>
+          https.get(url, function(resp) {
+            imgProgress++;
+            if (imgBar) imgBar.update(imgProgress);
+            const { statusCode } = resp;
+            if (statusCode !== 200) {
+              // Log an error, but continue to save further images by resolving the promise. This
+              // represents a best-effort attempt to download all of the images, but could result in
+              // a few broken img elements within the HTML output.
+              error(`Failed to download image: (${statusCode}) ${url}`);
+              resp.resume();
+              resolve();
+              return;
+            }
+            resp.pipe(imgFile);
+            imgFile.on('finish', () => {
+              imgFile.close();
+              resolve();
+            });
+            imgFile.on('error', () => {
+              imgFile.close();
+              reject();
+            });
+          })
+        )
+    );
     return join(imgDirname, baseName);
-  }
+  };
 }
 
 (async () => {
@@ -150,6 +172,14 @@ if (cli.flags.fmt === 'html') {
     }
     log(`Writing data as ${cli.flags.fmt} to ${cli.flags.out}`);
     writeFileSync(cli.flags.out, fileData);
+
+    if (saveImage) {
+      // Wait for all images to download before exiting.
+      info('Exporting images');
+      imgBar = progress(imgTotal, imgProgress);
+      await saveImagesPromise;
+      imgBar.stop();
+    }
   } catch (e) {
     fatal(e.stack);
   }
