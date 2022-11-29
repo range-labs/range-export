@@ -12,6 +12,7 @@ const meow = createRequire(import.meta.url)('meow');
 
 import { log, fatal } from './lib/printer.js';
 import exportCheckins from './lib/export-checkins.js';
+import renderCheckinsToHtml from './lib/render-checkins-to-html.js';
 
 const commands = {
   'check-ins': exportCheckins,
@@ -28,7 +29,8 @@ const cli = meow(
   Options
     --after, -a   Return data after this ISO timestamp
     --before, -b  Return data before this ISO timestamp
-    --fmt         json or csv
+    --target      Return data just for this target ID (user ID or team ID)
+    --fmt         json, csv, or html
     --out, -o     Output destination (default : ./)
 
   Examples
@@ -44,6 +46,9 @@ const cli = meow(
       },
       before: {
         alias: 'b',
+        type: 'string',
+      },
+      target: {
         type: 'string',
       },
       fmt: {
@@ -63,7 +68,7 @@ const cli = meow(
   }
 );
 
-if (['csv', 'json'].indexOf(cli.flags.fmt) === -1) {
+if (['csv', 'json', 'html'].indexOf(cli.flags.fmt) === -1) {
   fatal(`Invalid flag value\n--fmt=${cli.flags.fmt}`);
 }
 
@@ -110,11 +115,12 @@ try {
         expandArrayObjects: true,
         emptyFieldValue: '',
       });
-      log(`Writing data as CSV to ${cli.flags.out}`);
+    } else if (cli.flags.fmt === 'html') {
+      fileData = renderCheckinsToHtml(data);
     } else {
       fileData = JSON.stringify(data, null, 2);
-      log(`Writing data as JSON to ${cli.flags.out}`);
     }
+    log(`Writing data as ${cli.flags.fmt} to ${cli.flags.out}`);
     writeFileSync(cli.flags.out, fileData);
   } catch (e) {
     fatal(e.stack);
