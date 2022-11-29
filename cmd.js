@@ -29,6 +29,7 @@ const cli = meow(
   Options
     --after, -a   Return data after this ISO timestamp
     --before, -b  Return data before this ISO timestamp
+    --target      Return data just for this target ID (user ID or team ID)
     --fmt         json, csv, or html
     --out, -o     Output destination (default : ./)
 
@@ -45,6 +46,9 @@ const cli = meow(
       },
       before: {
         alias: 'b',
+        type: 'string',
+      },
+      target: {
         type: 'string',
       },
       fmt: {
