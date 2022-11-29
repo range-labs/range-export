@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 import Range from 'range-sdk';
-import { join, resolve } from 'path';
-import { writeFileSync, statSync } from 'fs';
+import { basename, dirname, join, resolve } from 'path';
+import { writeFileSync, statSync, createWriteStream, existsSync, mkdirSync } from 'fs';
+import https from 'https';
 
 import pkg from 'json-2-csv';
 const { json2csvAsync } = pkg;
@@ -10,7 +11,7 @@ const { json2csvAsync } = pkg;
 import { createRequire } from 'module';
 const meow = createRequire(import.meta.url)('meow');
 
-import { log, fatal } from './lib/printer.js';
+import { log, fatal, error } from './lib/printer.js';
 import exportCheckins from './lib/export-checkins.js';
 import renderCheckinsToHtml from './lib/render-checkins-to-html.js';
 
@@ -101,13 +102,40 @@ try {
   fatal(`Out file isn't writable\n${e.message}`);
 }
 
+// Set up image export directory for formats with image export.
+let saveImage = undefined;
+if (cli.flags.fmt === 'html') {
+  const imgDirname = 'range-export';
+  const imgPath = resolve(join(dirname(cli.flags.out), imgDirname));
+  if (!existsSync(imgPath)) {
+    mkdirSync(imgPath);
+  }
+  saveImage = (name, url) => {
+    const baseName = basename(name);
+    const imgFile = createWriteStream(join(imgPath, baseName));
+    https.get(url, function(resp) {
+      const { statusCode } = resp;
+      if (statusCode !== 200) {
+        error(`Failed to download image: (${statusCode}) ${url}`);
+        resp.resume();
+        return;
+      }
+      resp.pipe(imgFile);
+      imgFile.on("finish", () => {
+        imgFile.close();
+      })
+    });
+    return join(imgDirname, baseName);
+  }
+}
+
 (async () => {
   try {
     const client = new Range();
     const cmd = commands[cli.input[0]];
     if (!cmd) fatal(`Unknown command\n${cli.input[0]}`);
 
-    const data = await cmd(client, cli.flags);
+    const data = await cmd(client, { ...cli.flags, saveImage });
     let fileData;
     if (cli.flags.fmt === 'csv') {
       fileData = await json2csvAsync(data, {
