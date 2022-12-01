@@ -11,6 +11,8 @@
     "cli-progress": "^3.9.0",
     "emoji-toolkit": "^7.0.0",
     "json-2-csv": "^3.10.3",
+    "linkify-string": "^4.0.2",
+    "linkifyjs": "^4.0.2",
     "meow": "^9.0.0",
     "range-sdk": "^1.4.0"
   },
