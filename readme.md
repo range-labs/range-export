@@ -28,26 +28,40 @@ $ range-export-cli --help
 
 ### Options
 
-| Flag           | Description                                             |
-| -------------- | ------------------------------------------------------- |
-| _--after, -a_  | Return data after this JS compatible data.              |
-| _--before, -b_ | Return data after this JS compatible data.              |
-| _--fmt_        | Modify the output format; json or csv. (default: json)  |
-| _--out_        | Output directory or file (default: ./range-export.json) |
+| Flag           | Description                                                |
+| -------------- | ---------------------------------------------------------- |
+| _--after, -a_  | Return data after this JS compatible data.                 |
+| _--before, -b_ | Return data after this JS compatible data.                 |
+| _--fmt_        | Modify the output format; json or csv. (default: json)     |
+| _--images_     | Download images and use local references. (default: false) |
+| _--target_       | A user_id or team_id to fetch data for. (default: everything visible to API key ) |
+| _--out_        | Output directory or file (default: ./range-export.json)    |
 
 ### Export check-in data
 
 Export all check-ins for the workspace between two dates.
 
 ```bash
-$ range-export-cli check-ins  -a 2020-01-01 -b 2020-02-01 -o tmp.json
+$ range-export-cli check-ins -a 2020-01-01 -b 2020-02-01 -o meetings.json
 ```
 
-The JSON export will contain snippet items embedded in the update object.
+### Export meeting data
 
-CSV data will be "unwound" such that there is one row per item in an update. So
-if a check-in has 3 plan items and 6 past items, there will be 9 rows per
-check-in. For example:
+Export meetings for an org, team, or user.
+
+```bash
+$ range-export-cli meetings -o meetings.json
+```
+
+### On Formats
+
+The JSON will contain nested entities that can be traversed as a tree.
+
+HTML is only currently supported for check-ins.
+
+CSV data will be "unwound" such that there is one row per item. If a check-in
+has 3 plan items and 6 past items, there will be 9 rows per check-in. This format
+does not work well with meeting data.
 
 ```
 user_id,user_name,update_id,published_at,client_timezone_offset,mood,mood_color,snippets.id,snippets.type,snippets.is_main_focus,snippets.callout,snippets.content,snippets.attachment_id,snippets.attachment_provider,snippets.attachment_type,snippets.attachment_subtype,snippets.attachment_name,snippets.attachment_url
