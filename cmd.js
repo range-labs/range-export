@@ -13,10 +13,12 @@ const meow = createRequire(import.meta.url)('meow');
 
 import { error, fatal, info, log, progress } from './lib/printer.js';
 import exportCheckins from './lib/export-checkins.js';
+import exportMeetings from './lib/export-meetings.js';
 import renderCheckinsToHtml from './lib/render-checkins-to-html.js';
 
 const commands = {
   'check-ins': exportCheckins,
+  'meetings': exportMeetings,
 };
 
 const cli = meow(
@@ -32,6 +34,7 @@ const cli = meow(
     --before, -b  Return data before this ISO timestamp
     --target      Return data just for this target ID (user ID or team ID)
     --fmt         json, csv, or html
+    --images      Downloads referenced images and uses local references
     --out, -o     Output destination (default : ./)
 
   Examples
@@ -55,6 +58,10 @@ const cli = meow(
       fmt: {
         type: 'string',
         default: 'json',
+      },
+      images: {
+        type: 'boolean',
+        default: false,
       },
       out: {
         alias: 'o',
@@ -103,12 +110,12 @@ try {
 }
 
 // Set up image export directory for formats with image export.
-let saveImage = undefined;
+let saveImage = (name, url) => url;
 let saveImagesPromise = Promise.resolve();
 let imgBar = undefined,
   imgTotal = 0,
   imgProgress = 0;
-if (cli.flags.fmt === 'html') {
+if (cli.flags.images) {
   const imgDirname = 'range-export';
   const imgPath = resolve(join(dirname(cli.flags.out), imgDirname));
   if (!existsSync(imgPath)) {
@@ -165,7 +172,7 @@ if (cli.flags.fmt === 'html') {
         expandArrayObjects: true,
         emptyFieldValue: '',
       });
-    } else if (cli.flags.fmt === 'html') {
+    } else if (cli.flags.fmt === 'html' && cmd == 'check-ins') {
       fileData = renderCheckinsToHtml(data);
     } else {
       fileData = JSON.stringify(data, null, 2);
@@ -173,7 +180,7 @@ if (cli.flags.fmt === 'html') {
     log(`Writing data as ${cli.flags.fmt} to ${cli.flags.out}`);
     writeFileSync(cli.flags.out, fileData);
 
-    if (saveImage) {
+    if (cli.flags.images) {
       // Wait for all images to download before exiting.
       info('Exporting images');
       imgBar = progress(imgTotal, imgProgress);
